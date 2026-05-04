@@ -9,6 +9,7 @@ use App\Http\Requests\Api\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -18,18 +19,6 @@ class AuthController extends Controller
     {
 
         $request->validated();
-//        $validator = Validator::make($request->all(), [
-//            'name' => 'required',
-//            'email' => 'required|email|unique:users,email',
-//            'password' => 'required|string',
-//            'confirm_password' => 'required|same:password',
-//        ]);
-//
-//        if ($validator->fails()) {
-//            return $this->error($validator->errors()->all(), 'validation errors', 400);
-//        }
-
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -41,12 +30,6 @@ class AuthController extends Controller
         $response['token'] = $user->createToken('MyApp')->plainTextToken;
         $response['name'] = $user->name;
         $response['email'] = $user->email;
-//        return response()->json([
-//            'status' => 1,
-//            'message' => 'user registered',
-//            'data' => $response
-//
-//        ]);
 
         return $this->success($response, 'user registered successfully', 200);
 
@@ -63,21 +46,30 @@ class AuthController extends Controller
             $response['name'] = $user->name;
             $response['email'] = $user->email;
 
-//            return response()->json([
-//                'status' => 1,
-//                'message' => 'user registered',
-//                'data' => $response,
-//            ]);
+
+            if ($response['token']) {
+                /**************start///////////////************/
+                $response2 = Http::withoutVerifying()->asForm()->post('https://api.turn14.com/v1/token', [
+                    "grant_type" => "client_credentials",
+                    "client_id" => config('app.client_id'),
+                    "client_secret" => config('app.client_secret'),
+
+
+                ]);
+
+                $data = $response2->json();
+                $response['turn_token'] = $data;
+                session()->put('turn_token', $data['access_token']);
+            }
+            /************end ****************/
+
             return $this->success($response, 'user logged in successfully', 200);
 
         }
 
-//        return response()->json([
-//            'status' => 0,
-//            'message' => 'authentication error',
-//            'data' => null,
-//        ]);
         return $this->error(null, 'authentication error', 404);
 
     }
+
+
 }

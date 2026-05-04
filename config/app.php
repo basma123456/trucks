@@ -15,6 +15,12 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+
+    'API_URL' => env('API_URL'),
+    'grant_type' => env('grant_type'),
+    'client_id' => env('client_id'),
+    'client_secret' => env('client_secret'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
@@ -39,7 +45,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => (bool)env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -101,7 +107,7 @@ return [
 
     'previous_keys' => [
         ...array_filter(
-            explode(',', (string) env('APP_PREVIOUS_KEYS', '')),
+            explode(',', (string)env('APP_PREVIOUS_KEYS', '')),
         ),
     ],
 
