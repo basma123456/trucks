@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\GetCreditMemoByPurchaseOrderRequest;
 use App\Http\Requests\Api\GetCreditMemoRequest;
+use App\Http\Requests\Api\getCreditRequest;
 use App\Http\Traits\IntegrateTrait;
 use Illuminate\Http\Request;
 
@@ -12,10 +13,11 @@ class CreditController extends Controller
 {
     use IntegrateTrait;
 
-    public function index(Request $request)
+    public function index(GetCreditRequest $getCreditRequest)
     {
-        $credits = $this->getReturnedData($request, '/credits', 'get');
-        if(!isset($credits->json()['data']['data'])){
+        $getCreditRequest->validated();
+        $credits = $this->getReturnedData($getCreditRequest, '/credits', 'get');
+        if (!isset($credits->json()['data']['data'])) {
             return $this->notFoundResponse();
         }
         return $this->success($credits->json() ?? null, 'success', 200);
@@ -26,7 +28,7 @@ class CreditController extends Controller
     {
         $getCreditMemoRequest->validated();
         $credits = $this->getReturnedData($getCreditMemoRequest, '/credits/' . $getCreditMemoRequest->credit_id, 'get');
-        if(!isset($credits->json()['data'])){
+        if (!isset($credits->json()['data'])) {
             return $this->notFoundResponse();
         }
         return $this->success($credits->json() ?? null, 'success', 200);
@@ -37,7 +39,7 @@ class CreditController extends Controller
     {
         $getCreditMemoByPurchaseOrderRequest->validated();
         $credits = $this->getReturnedData($getCreditMemoByPurchaseOrderRequest, '/credits/po/' . $getCreditMemoByPurchaseOrderRequest->purchase_order, 'get');
-        if(!isset($credits->json()['data']['data'])){
+        if (!isset($credits->json()['data']['data'])) {
             return $this->notFoundResponse();
         }
         return $this->success($credits->json() ?? null, 'success', 200);
