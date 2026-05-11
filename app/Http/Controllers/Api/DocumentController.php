@@ -16,6 +16,10 @@ class DocumentController extends Controller
     {
         $getDocumentsByQuoteRequest->validated();
         $credits = $this->getReturnedData($getDocumentsByQuoteRequest, '/documents/' . $getDocumentsByQuoteRequest->quote_id, 'get');
+        if ($credits->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
+
         if (!isset($credits->json()['data'])) {
             return $this->notFoundResponse('No orders could be found related to this quote ' . $getDocumentsByQuoteRequest->quote_id);
         }
@@ -27,6 +31,10 @@ class DocumentController extends Controller
     {
         $getDocumentsByPurchaseOrderNumRequest->validated();
         $credits = $this->getReturnedData($getDocumentsByPurchaseOrderNumRequest, '/documents/po/' . $getDocumentsByPurchaseOrderNumRequest->purchase_order_number, 'get');
+        if ($credits->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
+
         if (!isset($credits->json()['data'])) {
             return $this->notFoundResponse('No orders could be found related to this purchase order ' . $getDocumentsByPurchaseOrderNumRequest->purchase_order_number);
         }

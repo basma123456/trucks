@@ -17,6 +17,10 @@ class CreditController extends Controller
     {
         $getCreditRequest->validated();
         $credits = $this->getReturnedData($getCreditRequest, '/credits', 'get');
+        if ($credits->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
+
         if (!isset($credits->json()['data']['data'])) {
             return $this->notFoundResponse();
         }
@@ -28,6 +32,10 @@ class CreditController extends Controller
     {
         $getCreditMemoRequest->validated();
         $credits = $this->getReturnedData($getCreditMemoRequest, '/credits/' . $getCreditMemoRequest->credit_id, 'get');
+        if ($credits->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
+
         if (!isset($credits->json()['data'])) {
             return $this->notFoundResponse();
         }
@@ -39,6 +47,10 @@ class CreditController extends Controller
     {
         $getCreditMemoByPurchaseOrderRequest->validated();
         $credits = $this->getReturnedData($getCreditMemoByPurchaseOrderRequest, '/credits/po/' . $getCreditMemoByPurchaseOrderRequest->purchase_order, 'get');
+        if ($credits->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
+
         if (!isset($credits->json()['data']['data'])) {
             return $this->notFoundResponse();
         }

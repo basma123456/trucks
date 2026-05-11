@@ -16,6 +16,9 @@ class BrandController extends Controller
     public function index(Request $request)
     {
         $brands = $this->getReturnedData($request, '/brands', 'get');
+        if ($brands->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
         if(!isset($brands->json()['data'])){
             return $this->notFoundResponse();
         }
@@ -26,6 +29,10 @@ class BrandController extends Controller
     {
         $brandRequest->validated();
         $brand = $this->getReturnedData($brandRequest, '/brands/' . $brandRequest->brand_id, 'get');
+        if ($brand->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
+
         if(!isset($brand->json()['data'])){
             return $this->notFoundResponse();
         }
@@ -39,6 +46,10 @@ class BrandController extends Controller
     {
         $brandPriceGroupRequest->validated();
         $brand = $this->getReturnedData($brandPriceGroupRequest, '/brands/' . $brandPriceGroupRequest->brand_id . '/pricegroup/' . $brandPriceGroupRequest->pricegroup_id, 'get');
+        if ($brand->status() === 401) {
+            return $this->error(null , 'Token expired or invalid' , 401);
+        }
+
         if(!isset($brand->json()['data'])){
             return $this->notFoundResponse();
         }
