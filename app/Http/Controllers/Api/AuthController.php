@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Requests\Api\RegisterRequest;
+use App\Http\Traits\IntegrateTrait;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    use IntegrateTrait;
+
     public function register(RegisterRequest $request)
     {
 
@@ -30,6 +33,16 @@ class AuthController extends Controller
         $response['token'] = $user->createToken('MyApp')->plainTextToken;
         $response['name'] = $user->name;
         $response['email'] = $user->email;
+
+
+        if ($response['token']) {
+            /**************start///////////////************/
+            $response2 = $this->getResponse('/token');
+            $data = $response2->json();
+            $response['turn_token'] = $data;
+            session()->put('turn_token', $data['access_token']);
+        }
+
 
         return $this->success($response, 'user registered successfully', 200);
 
@@ -49,14 +62,7 @@ class AuthController extends Controller
 
             if ($response['token']) {
                 /**************start///////////////************/
-                $response2 = Http::withoutVerifying()->asForm()->post('https://api.turn14.com/v1/token', [
-                    "grant_type" => "client_credentials",
-                    "client_id" => config('app.client_id'),
-                    "client_secret" => config('app.client_secret'),
-
-
-                ]);
-
+                $response2 = $this->getResponse('/token');
                 $data = $response2->json();
                 $response['turn_token'] = $data;
                 session()->put('turn_token', $data['access_token']);

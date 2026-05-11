@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BrandController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -50,11 +51,14 @@ Route::get('/user', function (Request $request) {
 
 //Route::get('get' , [kkj]);
 
-Route::get('/user' , function (Request $request){
+Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('register' , [AuthController::class , 'register']);
-Route::post('login' , [AuthController::class , 'login']);
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
+Route::get('brands', [BrandController::class, 'index']);
+Route::get('brands/show', [BrandController::class, 'show']);
+Route::get('brands/get-details-of-price-group', [BrandController::class, 'getDetailsOfPriceGroup']);
 
 
