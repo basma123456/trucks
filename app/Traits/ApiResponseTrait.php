@@ -8,12 +8,43 @@ trait ApiResponseTrait
 
     public function success($data = [], string $message = null, $code = 200, $token = null)
     {
-        $array = [
-            'success' => in_array($code, $this->successCode()) ?true : false,
+//        $array = [
+//            'success' => in_array($code, $this->successCode()) ?true : false,
+//            'message' => $message,
+//            'data' => $data,
+//        ];
+//        return response($array, $code);
+        $response = [
+            'success' => in_array($code, $this->successCode()),
             'message' => $message,
-            'data' => $data,
         ];
-        return response($array, $code);
+
+        // Check if paginated
+        if ($data instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+
+            $response['data'] = $data->items();
+
+            $response['pagination'] = [
+                'current_page' => $data->currentPage(),
+                'last_page' => $data->lastPage(),
+                'per_page' => $data->perPage(),
+                'total' => $data->total(),
+                'from' => $data->firstItem(),
+                'to' => $data->lastItem(),
+                'next_page_url' => $data->nextPageUrl(),
+                'prev_page_url' => $data->previousPageUrl(),
+            ];
+
+        } else {
+
+            $response['data'] = $data;
+        }
+
+        if ($token) {
+            $response['token'] = $token;
+        }
+
+        return response()->json($response, $code);
     }
 
     public function error($data = [], string $message = null, $code = 400)
