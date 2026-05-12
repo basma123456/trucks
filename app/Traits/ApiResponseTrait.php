@@ -51,7 +51,7 @@ trait ApiResponseTrait
     {
         $array = [
             'success' => in_array($code, $this->successCode()) ?true : false,
-            'message' => $message,
+-            'message' => $message,
             'data' => $data,
         ];
         return response($array, $code);
