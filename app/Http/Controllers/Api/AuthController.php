@@ -85,15 +85,10 @@ class AuthController extends Controller
     {
 
         if ($this->checkAuthentication($request)) {
-            return  response()->json(true, 200);
-        }else{
-            $data =  $this->regenerateToken();
-          return  response()->json($data, 201)->cookie(
-                'turn_token',
-                true,
-                2 // minutes = 3600 seconds
-            );
-
+            return $this->success(true, 'token is still valid', 200);
+        } else {
+            $data = $this->regenerateToken();
+            return $this->successLogin($data, 're generated successfully', 201);
         }
 
     }
