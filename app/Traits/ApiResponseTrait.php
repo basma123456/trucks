@@ -87,7 +87,7 @@ trait ApiResponseTrait
         return response()->json($response, $code)->cookie(
             'turn_token',
             true,
-            1 // minutes = 3600 seconds
+            2 // minutes = 3600 seconds
         );
     }
 
