@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CreditController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DropshipController;
 use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\ItemController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -34,13 +35,13 @@ Route::middleware('turn_auth')->group(function () {
     Route::get('documents', [DocumentController::class, 'getDocumentsByQuote']);
     Route::get('documents/po', [DocumentController::class, 'getDocumentsByPurchaseOrderNum']);
     Route::get('dropship-show', [DropshipController::class, 'dropShipShow']);
-
     Route::get('inventory', [InventoryController::class, 'getAllInventory']);
     Route::get('inventory-show', [InventoryController::class, 'getItemInventory']);
-
+    Route::get('items', [ItemController::class, 'index']);
 
 //    dropship/{dropship_id}
 });
 
+Route::get('check' , [AuthController::class , 'checkAuthenticationFunc']);
 
 

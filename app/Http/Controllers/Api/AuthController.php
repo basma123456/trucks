@@ -10,6 +10,7 @@ use App\Http\Traits\IntegrateTrait;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
@@ -44,7 +45,7 @@ class AuthController extends Controller
         }
 
 
-        return $this->success($response, 'user registered successfully', 200);
+        return $this->successLogin($response, 'user registered successfully', 201);
 
     }
 
@@ -52,7 +53,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         $request->validated();
-      //  dd('dsd');
+        //  dd('dsd');
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
             $response = [];
@@ -67,10 +68,11 @@ class AuthController extends Controller
                 $data = $response2->json();
                 $response['turn_token'] = $data;
                 session()->put('turn_token', $data['access_token']);
+
             }
             /************end ****************/
 
-            return $this->success($response, 'user logged in successfully', 200);
+            return $this->successLogin($response, 'user logged in successfully', 200);
 
         }
 
@@ -78,5 +80,22 @@ class AuthController extends Controller
 
     }
 
+
+    public function checkAuthenticationFunc(Request $request)
+    {
+
+        if ($this->checkAuthentication($request)) {
+            return  response()->json(true, 200);
+        }else{
+            $data =  $this->regenerateToken();
+          return  response()->json($data, 201)->cookie(
+                'turn_token',
+                true,
+                2 // minutes = 3600 seconds
+            );
+
+        }
+
+    }
 
 }

@@ -7,15 +7,20 @@ use App\Http\Requests\Api\BrandPriceGroupRequest;
 use App\Http\Requests\Api\BrandRequest;
 use App\Http\Traits\IntegrateTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
 
 class BrandController extends Controller
 {
     use IntegrateTrait;
 
+
+
+
     public function index(Request $request)
     {
         $brands = $this->getReturnedData($request, '/brands', 'get');
+//        dd($brands->status());
         if ($brands->status() === 401) {
             return $this->error(null , 'Token expired or invalid' , 401);
         }

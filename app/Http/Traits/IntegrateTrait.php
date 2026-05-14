@@ -24,4 +24,19 @@ trait IntegrateTrait
         return Http::withToken($request->bearerToken())
             ->$method(config('app.API_URL') . $url);
     }
+
+
+    function checkAuthentication($request){
+        $token = $request->cookie('turn_token');
+        return $token;
+    }
+
+
+    function regenerateToken(){
+        /**************start///////////////************/
+        $response2 = $this->getResponse('/token');
+        $data = $response2->json();
+        $response['turn_token'] = $data;
+        return  $data['access_token'];
+    }
 }
