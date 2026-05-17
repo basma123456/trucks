@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\BrandInventoryRequest;
 use App\Http\Requests\Api\BrandPriceGroupRequest;
 use App\Http\Requests\Api\BrandRequest;
 use App\Http\Traits\IntegrateTrait;
@@ -60,4 +61,6 @@ class BrandController extends Controller
         }
         return $this->success($brand->json() , 'success', 200);
     }
+
+
 }

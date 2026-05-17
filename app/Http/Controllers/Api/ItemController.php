@@ -14,9 +14,22 @@ class ItemController extends Controller
     {
         $data = $this->getReturnedData($request, '/items', 'get');
         if ($data->status() === 401) {
-            return $this->error(null , 'Token expired or invalid' , 401);
+            return $this->error(null, 'Token expired or invalid', 401);
         }
-        if(!isset($data->json()['data'])){
+        if (!isset($data->json()['data'])) {
+            return $this->notFoundResponse();
+        }
+        return $this->success($data->json(), 'success', 200);
+    }
+
+
+    public function getItemsBrand(Request $request)
+    {
+        $data = $this->getReturnedData($request, '/items/brand/' . $request->brand_id . '?page=' . $request->page, 'get');
+        if ($data->status() === 401) {
+            return $this->error(null, 'Token expired or invalid', 401);
+        }
+        if (!isset($data->json()['data'])) {
             return $this->notFoundResponse();
         }
         return $this->success($data->json(), 'success', 200);

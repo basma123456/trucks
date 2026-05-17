@@ -38,6 +38,10 @@ Route::middleware('turn_auth')->group(function () {
     Route::get('inventory', [InventoryController::class, 'getAllInventory']);
     Route::get('inventory-show', [InventoryController::class, 'getItemInventory']);
     Route::get('items', [ItemController::class, 'index']);
+    Route::get('inventory-brand' , [InventoryController::class , 'getBrandInventory'] );
+    Route::get('price-group-inventory' , [InventoryController::class , 'getPriceGroupInventory']);
+    Route::get('recently-updated-inventory' , [InventoryController::class , 'getRecentlyUpdatedInventory']);
+    Route::get('items-brand' , [ItemController::class , 'getItemsBrand']);
 
 //    dropship/{dropship_id}
 });
