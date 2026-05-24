@@ -8,4 +8,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 });
 
-require __DIR__.'/settings.php';
+Route::get('admin/brands-list', [\App\Http\Controllers\Admin\BrandController::class , 'listBrands']);
+
+require __DIR__ . '/settings.php';

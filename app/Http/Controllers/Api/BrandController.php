@@ -7,6 +7,7 @@ use App\Http\Requests\Api\BrandInventoryRequest;
 use App\Http\Requests\Api\BrandPriceGroupRequest;
 use App\Http\Requests\Api\BrandRequest;
 use App\Http\Traits\IntegrateTrait;
+use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
@@ -15,35 +16,80 @@ class BrandController extends Controller
 {
     use IntegrateTrait;
 
-
-
-
     public function index(Request $request)
     {
         $brands = $this->getReturnedData($request, '/brands', 'get');
-//        dd($brands->status());
-        if ($brands->status() === 401) {
-            return $this->error(null , 'Token expired or invalid' , 401);
+
+        // If response is HTTP response
+        if ($brands instanceof \Illuminate\Http\Client\Response) {
+
+            if ($brands->status() === 401) {
+                return $this->error(null, 'Token expired or invalid', 401);
+            }
+
+            $responseData = $brands->json();
+
+        } else {
+
+            // Collection or array fallback
+            $responseData = is_array($brands)
+                ? $brands
+                : $brands->toArray();
         }
-        if(!isset($brands->json()['data'])){
+
+        if (!isset($responseData['data'])) {
             return $this->notFoundResponse();
         }
-        return $this->success($brands->json(), 'success', 200);
+
+        $brandsInDb = Brand::where('status', 1)
+            ->pluck('code')
+            ->toArray();
+
+        $all = collect($responseData['data'])->filter(function ($item) use ($brandsInDb) {
+            return in_array($item['id'], $brandsInDb);
+        });
+
+        return $this->success($all->values()->toArray(), 'success', 200);
     }
+//    public function index(Request $request)
+//    {
+////        $numbers = [];
+////        while(count($numbers) < 8) {
+////            array_push($numbers, rand(1, 1000));
+////        }
+//        $brands = $this->getReturnedData($request, '/brands', 'get');
+//
+//        if (!isset($brands->json()['data'])) {
+//            return $this->notFoundResponse();
+//        }
+//        if ($brands->status() === 401) {
+//            return $this->error(null, 'Token expired or invalid', 401);
+//        }
+//
+//        $brandsInDb = Brand::where('status', 1)->pluck('code')->toArray();
+//        $arr = $brands->json()['data'];
+//        $all = collect($arr)->filter(function ($item) use ($brandsInDb) {
+//            return in_array($item['id'], $brandsInDb);
+//        });
+//        if ($brands->status() === 401) {
+//            return $this->error(null, 'Token expired or invalid', 401);
+//        }
+//        return $this->success($all->values()->toArray(), 'success', 200);
+//    }
 
     public function show(BrandRequest $brandRequest)
     {
         $brandRequest->validated();
         $brand = $this->getReturnedData($brandRequest, '/brands/' . $brandRequest->brand_id, 'get');
         if ($brand->status() === 401) {
-            return $this->error(null , 'Token expired or invalid' , 401);
+            return $this->error(null, 'Token expired or invalid', 401);
         }
 
-        if(!isset($brand->json()['data'])){
+        if (!isset($brand->json()['data'])) {
             return $this->notFoundResponse();
         }
 
-        return $this->success($brand->json() , 'success', 200);
+        return $this->success($brand->json(), 'success', 200);
     }
 
 //GET/v1/brands/{brand_id}/pricegroup/{pricegroup_id
@@ -53,13 +99,13 @@ class BrandController extends Controller
         $brandPriceGroupRequest->validated();
         $brand = $this->getReturnedData($brandPriceGroupRequest, '/brands/' . $brandPriceGroupRequest->brand_id . '/pricegroup/' . $brandPriceGroupRequest->pricegroup_id, 'get');
         if ($brand->status() === 401) {
-            return $this->error(null , 'Token expired or invalid' , 401);
+            return $this->error(null, 'Token expired or invalid', 401);
         }
 
-        if(!isset($brand->json()['data'])){
+        if (!isset($brand->json()['data'])) {
             return $this->notFoundResponse();
         }
-        return $this->success($brand->json() , 'success', 200);
+        return $this->success($brand->json(), 'success', 200);
     }
 
 
