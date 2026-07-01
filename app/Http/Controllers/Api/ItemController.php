@@ -160,81 +160,10 @@ class ItemController extends Controller
 
 
 
-    //    public function getItemsFromArrayOfBrands(Request $request)
-//    {
-//        $brands = [];
-//        $brandsAllResponse = [];
-//        if (!empty($request->brand_id)) {
-//            foreach ($request->brand_id as $brand) {
-//                $item = $this->getReturnedData($request, '/items/brand/' . (int)$brand . '?page=' . $request->page, 'get');
-//                $brands[] = $item->json()['data'];
-//                $brandsAllResponse[] = $item;
-//            }
-//        }
-//        $data = $brands;
-//        if ($brandsAllResponse[0]->status() === 401) {
-//            return $this->error(null, 'Token expired or invalid', 401);
-//        }
-//        if (!isset($brandsAllResponse[0]->json()['data'])) {
-//            return $this->notFoundResponse();
-//        }
-//
-//        return $this->success($data, 'success', 200);
-//    }
 
 
-//    public function index(Request $request)
-//    {
-//
-//        $dbItems = Item::whereHas('brand', function ($q) {
-//            $q->where(['status' => 1, 'type' => 'local']);
-//        })->select('id', 'product_name', 'thumbnail',
-//            'part_description',
-//            'category', 'subcategory',
-//            'type',
-//            'price')
-//            ->get()->toArray();
-//
-//        $dbActiveBrands = Brand::where('status', 1)->pluck('id')->toArray();
-//
-//        $data = $this->getReturnedData($request, '/items', 'get');
-//        if ($data->status() === 401) {
-//            return $this->error(null, 'Token expired or invalid', 401);
-//        }
-//        if (!isset($data->json()['data'])) {
-//            return $this->notFoundResponse();
-//        }
-//
-//        $all = collect($data['data'])->filter(function ($item) use ($dbActiveBrands) {
-//            return in_array($item['attributes']['brand_id'], $dbActiveBrands);
-//        })
-//            ->map(function ($item) {
-//                return [
-//                    'id' => $item['id'],
-//                    "product_name" => $item['attributes']['product_name'],
-//                    "thumbnail" => $item['attributes']['thumbnail'],
-////                    "part_number" => $item['attributes']['part_number'],
-////                    "mfr_part_number" => $item['attributes']['mfr_part_number'],
-//                    "part_description" => $item['attributes']['part_description'],
-//                    "category" => $item['attributes']['category'],
-//                    "subcategory" => $item['attributes']['subcategory'],
-//                    'type' => 'from America',
-//                    "price_group_id" => $item['attributes']['price_group_id'],
-//                    "price_group" => $item['attributes']['price_group'],
-//                    "brand_id" => $item['attributes']['brand_id'],
-//
-//                ];
-//            })
-//            ->unique('product_name')
-//            ->values();
-//
-//
-////        $all = array_merge($dbItems->toArray(), $data->json()['data']);
-//        $all = array_merge(array_values($all->toArray()), $dbItems);
-////        return $this->success($data->json(), 'success', 200);
-//        return $this->success($all, 'success', 200);
-//
-//    }
+
+
 
 
     public function show(Request $request) //here
@@ -417,30 +346,9 @@ class ItemController extends Controller
 
 }
 
-//{
-//    "id": "1004926",
-//            "product_name": "AFE Sway Bar",
-//            "part_description": "aFe POWER 20-26 Toyota GR Supra A90 Front Sway Bar - Race Edition Blue",
-//            "category": "Suspension",
-//            "subcategory": "Sway Bars",
-//            "type": "from America",
-//            "price_group_id": 624,
-//            "price_group": "aFe Discount D"
-//        },
 
-//{
-//    "id": 3,
-//            "product_name": "Logitech MX Master 3",
-//            "part_number": "LOG-MXM3-003",
-//            "category": "Accessories",
-//            "subcategory": "Mouse",
-//            "brand_id": 453,
-//            "thumbnail": "items/logitech-mx-master-3.jpg",
-//            "barcode": "1234567890125",
-//            "created_at": "2026-06-16T14:00:27.000000Z",
-//            "updated_at": "2026-06-16T14:00:27.000000Z",
-//            "type": "from egypt"
-//        }
+
+
 
 
 //product_name
