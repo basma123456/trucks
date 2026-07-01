@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\IntegrateTrait;
 use App\Models\Brand;
 use App\Models\Item;
+use App\Models\PricingList;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -36,14 +37,20 @@ class ItemController extends Controller
             ->select(
                 'item_code',
                 DB::raw('SUM(price) as total_price'),
-                DB::raw('SUM(purchase_cost) as total_purchase_cost')
+//                DB::raw('SUM(purchase_cost) as total_purchase_cost')
+                DB::raw('MIN(purchase_cost) as purchase_cost')
             )
             ->groupBy('item_code');
+
         $query2 = Item::query()
             ->join('brands', 'items.brand_code', '=', 'brands.code')
-            ->leftJoinSub($pricingQuery, 'pricing', function ($join) {
+            ->joinSub($pricingQuery, 'pricing', function ($join) {
                 $join->on('items.code', '=', 'pricing.item_code');
             })
+//            ->joinSub($pricingQuery, 'pricing', function ($join) {
+//                $join->on('items.code', '=', 'pricing.item_code');
+//            })
+
             ->where('brands.status', 1)
             ->where('brands.type', 'api')
             ->whereIn('items.brand_code', $request->brand_id);
@@ -56,7 +63,7 @@ class ItemController extends Controller
             $query->where('price', '>=', $request->price_from);
 
             $query2->whereRaw(
-                '(COALESCE(pricing.total_price,0) + COALESCE(pricing.total_purchase_cost,0)) >= ?',
+                '(COALESCE(pricing.total_price,0) + COALESCE(pricing.purchase_cost,0)) >= ?',
                 [$request->price_from]
             );
         }
@@ -65,7 +72,7 @@ class ItemController extends Controller
             $query->where('price', '<=', $request->price_to);
 
             $query2->whereRaw(
-                '(COALESCE(pricing.total_price,0) + COALESCE(pricing.total_purchase_cost,0)) <= ?',
+                '(COALESCE(pricing.total_price,0) + COALESCE(pricing.purchase_cost,0)) <= ?',
                 [$request->price_to]
             );
         }
@@ -82,7 +89,7 @@ class ItemController extends Controller
 
 
 
-        $dbItems = $query->select('id', 'product_name', 'thumbnail',
+        $dbItems = $query->select('id',"code" ,'product_name', 'thumbnail',
             'part_description',
             'category', 'subcategory',
             'type',
@@ -93,7 +100,7 @@ class ItemController extends Controller
             'items.*',
             'brands.name as brand_name',
             DB::raw('COALESCE(pricing.total_price,0) as total_price'),
-            DB::raw('COALESCE(pricing.total_purchase_cost,0) as total_purchase_cost')
+            DB::raw('COALESCE(pricing.purchase_cost,0) as purchase_cost')
         )->get();
 
         $apIdataArray = $data->toArray();
@@ -109,8 +116,8 @@ class ItemController extends Controller
 //                $extra = [];
 //                if ($item['type'] == 'api') {
 //                    $extra = ["price" => $item['total_price'] ?? null,
-//                        'purchase_cost' => $item['total_purchase_cost'] ?? null,
-//                        'total_price' => $item['total_price'] + $item['total_purchase_cost']];
+//                        'purchase_cost' => $item['purchase_cost'] ?? null,
+//                        'total_price' => $item['total_price'] + $item['purchase_cost']];
 //                } elseif ($item['type'] == 'local') {
 //                    $extra = ["price" => $item['price'] ?? null,
 //                        'purchase_cost' => 0,
@@ -142,14 +149,14 @@ class ItemController extends Controller
 
             if ($item['type'] == 'api') {
                 $price = $item['total_price'] ?? 0;
-                $purchase = $item['total_purchase_cost'] ?? 0;
+                $purchase = $item['purchase_cost'] ?? 0;
             } else {
                 $price = $item['price'] ?? 0;
                 $purchase = 0;
             }
 
             return [
-                'id' => $item['id'] ?? null,
+                'id' => $item['code'] ?? null,
                 'product_name' => $item['product_name'] ?? null,
                 'thumbnail' => $item['thumbnail'] ?? '',
                 'part_description' => $item['part_description'] ?? null,
@@ -260,7 +267,7 @@ class ItemController extends Controller
 //                if ($item['type'] == 'api') {
 //                    $extra = ["price" => $item['total_price'] ?? null,
 //                        'purchase_cost' => $item['total_purchase_cost'] ?? null,
-//                        'total_price' => $item['total_price'] + $item['total_purchase_cost']];
+//                        'total_price' => $item['total_price'] + $item['purchase_cost']];
 //                } elseif ($item['type'] == 'local') {
 //                    $extra = ["price" => $item['price'] ?? null,
 //                        'purchase_cost' => 0,
