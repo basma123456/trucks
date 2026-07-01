@@ -55,31 +55,7 @@ class BrandController extends Controller
 
         return $this->success(array_merge($all->values()->toArray() , $brandsLocal->toArray()), 'success', 200);
     }
-//    public function index(Request $request)
-//    {
-////        $numbers = [];
-////        while(count($numbers) < 8) {
-////            array_push($numbers, rand(1, 1000));
-////        }
-//        $brands = $this->getReturnedData($request, '/brands', 'get');
-//
-//        if (!isset($brands->json()['data'])) {
-//            return $this->notFoundResponse();
-//        }
-//        if ($brands->status() === 401) {
-//            return $this->error(null, 'Token expired or invalid', 401);
-//        }
-//
-//        $brandsInDb = Brand::where('status', 1)->pluck('code')->toArray();
-//        $arr = $brands->json()['data'];
-//        $all = collect($arr)->filter(function ($item) use ($brandsInDb) {
-//            return in_array($item['id'], $brandsInDb);
-//        });
-//        if ($brands->status() === 401) {
-//            return $this->error(null, 'Token expired or invalid', 401);
-//        }
-//        return $this->success($all->values()->toArray(), 'success', 200);
-//    }
+
 
     public function show(BrandRequest $brandRequest)
     {
