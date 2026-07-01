@@ -41,15 +41,19 @@ class BrandController extends Controller
             return $this->notFoundResponse();
         }
 
-        $brandsInDb = Brand::where('status', 1)
+        $brandsInDb = Brand::where(['status'=> 1 , 'type' => 'api'])
             ->pluck('code')
             ->toArray();
+
+
+        $brandsLocal = Brand::where(['status' =>1 , 'type' => 'local'])->get();
+
 
         $all = collect($responseData['data'])->filter(function ($item) use ($brandsInDb) {
             return in_array($item['id'], $brandsInDb);
         });
 
-        return $this->success($all->values()->toArray(), 'success', 200);
+        return $this->success(array_merge($all->values()->toArray() , $brandsLocal->toArray()), 'success', 200);
     }
 //    public function index(Request $request)
 //    {

@@ -138,12 +138,12 @@ class AuthController extends Controller
     public function checkAuthenticationFunc(Request $request)
     {
 
-        if ($this->checkAuthentication($request)) {
-            return $this->success(true, 'token is still valid', 200);
-        } else {
-            $data = $this->regenerateToken();
-            return $this->successLogin($data, 're generated successfully', 201);
-        }
+//        if ( $this->checkAuthentication($request)) {
+//            return $this->success(true, 'token is still valid', 200);
+//        } else {
+        $data = $this->regenerateToken();
+        return $this->successLogin($data, 're generated successfully', 201);
+//        }
 
     }
 

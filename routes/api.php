@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PricingController;
+use App\Http\Controllers\Api\ShippingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -57,7 +60,25 @@ Route::middleware('turn_auth')->group(function () {
     Route::get('order-show-by-po' , [OrderController::class , 'getOrderByPurchaseOrder']);
     Route::get('orders-date-range' , [OrderController::class , 'ordersDateRange']);
 
+    Route::get('payments' , [PaymentController::class , 'index']);
+    Route::get('payment-show' , [PaymentController::class , 'show']);
+    Route::get('payment-show-by-invoice' , [PaymentController::class , 'showByInvoice']);
+    Route::get('payments-date-range' , [PaymentController::class , 'paymentsDateRange']);
 
+    Route::get('pricing' , [PricingController::class , 'index']);
+    Route::get('pricing-item' , [PricingController::class , 'getPricingItem']);
+
+    Route::get('pricing-brand' , [PricingController::class , 'getPricingBrand']);
+    Route::get('pricing-brand-by-group' , [PricingController::class , 'getPricingBrandByGroup']);
+    Route::get('shipping' , [ShippingController::class , 'index']);
+
+
+    Route::get('items/show' , [ItemController::class , 'show']);
+    Route::post('items/list-items-of-brands' , [ItemController::class , 'getItemsFromArrayOfBrands']);
+
+
+//    /v1/pricing/brand/{brand_id}?page={page}
+//    pricing/brand/{brand_id}?page={page}
 
 //   /items/fitment?page={page}
 

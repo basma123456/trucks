@@ -4,22 +4,284 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Traits\IntegrateTrait;
+use App\Models\Brand;
+use App\Models\Item;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use function Ramsey\Collection\Map\keys;
+use App\Services\ApiService;
+use App\Services\PricingService;
 
 class ItemController extends Controller
 {
     use IntegrateTrait;
 
+
     public function index(Request $request)
     {
-        $data = $this->getReturnedData($request, '/items', 'get');
-        if ($data->status() === 401) {
-            return $this->error(null, 'Token expired or invalid', 401);
-        }
-        if (!isset($data->json()['data'])) {
+        if (empty($request->brand_id)) {
             return $this->notFoundResponse();
         }
-        return $this->success($data->json(), 'success', 200);
+
+
+        /********************************original ****************/
+//        $dbItems = Item::whereHas('brand', function ($q) use ($request) {
+//            $q->where(['status' => 1, 'type' => 'local'])->whereIn('id', $request->brand_id);
+//        })->select('id', 'product_name', 'thumbnail',
+//            'part_description',
+//            'category', 'subcategory',
+//            'type',
+//            'price', 'brand_id')
+//
+//
+//            ->get()->toArray();
+//
+//        $data = Item::join('brands', 'items.brand_code', '=', 'brands.code')
+//            ->join('pricing_lists', 'items.code', '=', 'pricing_lists.item_code')
+//            ->where('brands.status', 1)
+//            ->where('brands.type', 'api')
+////            ->where('items.type' , 'api')
+//            ->whereIn('items.brand_code', $request->brand_id)
+//            ->selectRaw("
+//                items.*,
+//                brands.name as brand_name,
+//                SUM(pricing_lists.price) as total_price,
+//                SUM(pricing_lists.purchase_cost) as total_purchase_cost"
+//            )
+//            ->groupBy('items.id')
+//
+//            ->get();
+        /*********************end original *********************/
+
+        /*************************db items query*************/
+        $query = Item::where('type' , 'local')->whereHas('brand', function ($q) use ($request) {
+            $q->where(['status' => 1])->whereIn('code', $request->brand_id);
+        });
+
+        /*****************end  db items query************/
+
+        /*******************api items query **********/
+        $query2 = Item::join('brands', 'items.brand_code', '=', 'brands.code')
+            ->join('pricing_lists', 'items.code', '=', 'pricing_lists.item_code')
+            ->where('brands.status', 1)
+            ->where('brands.type', 'api')
+//            ->where('items.type' , 'api')
+            ->whereIn('items.brand_code', $request->brand_id)
+            ->groupBy('items.id');
+
+        /**************end api items query**********/
+
+
+        if ($request->price_from) {
+            $query->where("price", ">=", $request->price_from);
+
+            $query2->havingRaw(
+                '(SUM(pricing_lists.price) + SUM(pricing_lists.purchase_cost)) >= ?',
+                [$request->price_from]
+            );
+
+        }
+        if ($request->price_to) {
+            $query->where("price", "<=", $request->price_to);
+            $query2->havingRaw(
+                '(SUM(pricing_lists.price) + SUM(pricing_lists.purchase_cost)) <= ?',
+                [$request->price_to]
+            );
+        }
+        if ($request->search) {
+            $query->where("product_name", "like", "%" . $request->search . "%");
+
+            $query2->where("product_name", "like", "%" . $request->search . "%");
+        }
+
+
+        $dbItems = $query->select('id', 'product_name', 'thumbnail',
+            'part_description',
+            'category', 'subcategory',
+            'type',
+            'price', 'brand_id', 'brand_code')->get()->toArray();
+
+        $data = $query2->selectRaw("
+                items.*,
+                brands.name as brand_name,
+                SUM(pricing_lists.price) as total_price,
+                SUM(pricing_lists.purchase_cost) as total_purchase_cost"
+        )
+//            ->groupBy('items.id')
+            ->get();
+
+
+        $apIdataArray = $data->toArray();
+        $all = array_merge($apIdataArray, $dbItems);
+
+
+        if ((empty($apIdataArray) && empty($dbItems))) {
+            return $this->notFoundResponse();
+        }
+
+        return $this->success(
+            collect($all)->map(function ($item) {
+                $extra = [];
+                if ($item['type'] == 'api') {
+                    $extra = ["price" => $item['total_price'] ?? null,
+                        'purchase_cost' => $item['total_purchase_cost'] ?? null,
+                        'total_price' => $item['total_price'] + $item['total_purchase_cost']];
+                } elseif ($item['type'] == 'local') {
+                    $extra = ["price" => $item['price'] ?? null,
+                        'purchase_cost' => 0,
+                        'total_price' => $item['price']];
+                }
+
+
+                $res = array_merge($extra, [
+
+
+                    'id' => $item['id'] ?? null,
+                    "product_name" => $item['product_name'] ?? null,
+                    "thumbnail" => $item['thumbnail'] ?? '',
+                    "part_description" => $item['part_description'] ?? null,
+                    "category" => $item['category'] ?? null,
+                    "subcategory" => $item['subcategory'] ?? null,
+                    'type' => $item['type'] ?? null,
+//                    "price_group_id" => $item['price_group_id'] ?? null,
+//                    "price_group" => $item['price_group'] ?? null,
+                    "brand_code" => $item['brand_code'] ?? null,
+
+                ]);
+                return $res;
+
+
+            }), 'success', 200);
+
+    }
+
+
+
+
+
+
+    //    public function getItemsFromArrayOfBrands(Request $request)
+//    {
+//        $brands = [];
+//        $brandsAllResponse = [];
+//        if (!empty($request->brand_id)) {
+//            foreach ($request->brand_id as $brand) {
+//                $item = $this->getReturnedData($request, '/items/brand/' . (int)$brand . '?page=' . $request->page, 'get');
+//                $brands[] = $item->json()['data'];
+//                $brandsAllResponse[] = $item;
+//            }
+//        }
+//        $data = $brands;
+//        if ($brandsAllResponse[0]->status() === 401) {
+//            return $this->error(null, 'Token expired or invalid', 401);
+//        }
+//        if (!isset($brandsAllResponse[0]->json()['data'])) {
+//            return $this->notFoundResponse();
+//        }
+//
+//        return $this->success($data, 'success', 200);
+//    }
+
+
+//    public function index(Request $request)
+//    {
+//
+//        $dbItems = Item::whereHas('brand', function ($q) {
+//            $q->where(['status' => 1, 'type' => 'local']);
+//        })->select('id', 'product_name', 'thumbnail',
+//            'part_description',
+//            'category', 'subcategory',
+//            'type',
+//            'price')
+//            ->get()->toArray();
+//
+//        $dbActiveBrands = Brand::where('status', 1)->pluck('id')->toArray();
+//
+//        $data = $this->getReturnedData($request, '/items', 'get');
+//        if ($data->status() === 401) {
+//            return $this->error(null, 'Token expired or invalid', 401);
+//        }
+//        if (!isset($data->json()['data'])) {
+//            return $this->notFoundResponse();
+//        }
+//
+//        $all = collect($data['data'])->filter(function ($item) use ($dbActiveBrands) {
+//            return in_array($item['attributes']['brand_id'], $dbActiveBrands);
+//        })
+//            ->map(function ($item) {
+//                return [
+//                    'id' => $item['id'],
+//                    "product_name" => $item['attributes']['product_name'],
+//                    "thumbnail" => $item['attributes']['thumbnail'],
+////                    "part_number" => $item['attributes']['part_number'],
+////                    "mfr_part_number" => $item['attributes']['mfr_part_number'],
+//                    "part_description" => $item['attributes']['part_description'],
+//                    "category" => $item['attributes']['category'],
+//                    "subcategory" => $item['attributes']['subcategory'],
+//                    'type' => 'from America',
+//                    "price_group_id" => $item['attributes']['price_group_id'],
+//                    "price_group" => $item['attributes']['price_group'],
+//                    "brand_id" => $item['attributes']['brand_id'],
+//
+//                ];
+//            })
+//            ->unique('product_name')
+//            ->values();
+//
+//
+////        $all = array_merge($dbItems->toArray(), $data->json()['data']);
+//        $all = array_merge(array_values($all->toArray()), $dbItems);
+////        return $this->success($data->json(), 'success', 200);
+//        return $this->success($all, 'success', 200);
+//
+//    }
+
+
+    public function show(Request $request) //here
+    {
+        if ($request->type == 'api') {
+            $data = $this->getReturnedData($request, '/items/' . $request->item_id, 'get');
+            $price = $this->getReturnedData($request, '/pricing/' . $request->item_id, 'get');
+
+            if ($price['data']['attributes']['can_purchase']) {
+                $allPrice = $price['data']['attributes']['pricelists'][0]['price'] +
+                    $price['data']['attributes']['pricelists'][0]['price'] +
+                    $price['data']['attributes']['purchase_cost'];
+            } else {
+                $allPrice = 'N/A';
+            }
+
+            if ($data->status() === 401) {
+                return $this->error(null, 'Token expired or invalid', 401);
+            }
+            if (!isset($data->json()['data'])) {
+                return $this->notFoundResponse();
+            }
+            $all = collect($data->json())->map(function ($item) use ($allPrice) {
+                return [
+                    "product_name" => $item['attributes']['product_name'],
+                    "part_number" => $item['attributes']['part_number'],
+                    "mfr_part_number" => $item['attributes']['mfr_part_number'],
+                    "part_description" => $item['attributes']['part_description'],
+                    "category" => $item['attributes']['category'],
+                    "subcategory" => $item['attributes']['subcategory'],
+                    'type' => 'from America',
+                    'price' => is_numeric($allPrice) ? round($allPrice, 2) : 'N/A', //whole price
+//                    "price_group_id" => $item['attributes']['price_group_id'],
+//                    "price_group" => $item['attributes']['price_group'],
+                ];
+            });
+            return $this->success($all['data'], 'success', 200);
+        } elseif ($request->type == 'local') {
+            $data = Item::whereHas('brand', function ($q) {
+                $q->where(['status' => 1, 'type' => 'local']);
+            })->find($request->item_id);
+            if (!$data) {
+                return $this->notFoundResponse();
+            }
+            return $this->success($data, 'success', 200);
+
+        }
     }
 
 
@@ -46,6 +308,29 @@ class ItemController extends Controller
             return $this->notFoundResponse();
         }
         return $this->success($data->json(), 'success', 200);
+    }
+
+
+    public function getItemsFromArrayOfBrands(Request $request)
+    {
+        $brands = [];
+        $brandsAllResponse = [];
+        if (!empty($request->brand_id)) {
+            foreach ($request->brand_id as $brand) {
+                $item = $this->getReturnedData($request, '/items/brand/' . (int)$brand . '?page=' . $request->page, 'get');
+                $brands[] = $item->json()['data'];
+                $brandsAllResponse[] = $item;
+            }
+        }
+        $data = $brands;
+        if ($brandsAllResponse[0]->status() === 401) {
+            return $this->error(null, 'Token expired or invalid', 401);
+        }
+        if (!isset($brandsAllResponse[0]->json()['data'])) {
+            return $this->notFoundResponse();
+        }
+
+        return $this->success($data, 'success', 200);
     }
 
 
@@ -120,7 +405,7 @@ class ItemController extends Controller
     public function fitmentItemData(Request $request)
     {
 //        v1/items/fitment/{item_id}
-        $data = $this->getReturnedData($request, '/items/fitment/' . $request->item_id , 'get');
+        $data = $this->getReturnedData($request, '/items/fitment/' . $request->item_id, 'get');
         if ($data->status() === 401) {
             return $this->error(null, 'Token expired or invalid', 401);
         }
@@ -131,3 +416,37 @@ class ItemController extends Controller
     }
 
 }
+
+//{
+//    "id": "1004926",
+//            "product_name": "AFE Sway Bar",
+//            "part_description": "aFe POWER 20-26 Toyota GR Supra A90 Front Sway Bar - Race Edition Blue",
+//            "category": "Suspension",
+//            "subcategory": "Sway Bars",
+//            "type": "from America",
+//            "price_group_id": 624,
+//            "price_group": "aFe Discount D"
+//        },
+
+//{
+//    "id": 3,
+//            "product_name": "Logitech MX Master 3",
+//            "part_number": "LOG-MXM3-003",
+//            "category": "Accessories",
+//            "subcategory": "Mouse",
+//            "brand_id": 453,
+//            "thumbnail": "items/logitech-mx-master-3.jpg",
+//            "barcode": "1234567890125",
+//            "created_at": "2026-06-16T14:00:27.000000Z",
+//            "updated_at": "2026-06-16T14:00:27.000000Z",
+//            "type": "from egypt"
+//        }
+
+
+//product_name
+//part_description  //add this
+//type
+//price
+
+
+

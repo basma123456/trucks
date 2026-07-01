@@ -26,11 +26,15 @@ trait IntegrateTrait
     }
 
 
+//    function checkAuthentication($request){
+//        $token = $request->cookie('turn_token');
+//        return $token;
+//    }
+
     function checkAuthentication($request){
-        $token = $request->cookie('turn_token');
+        $token = $request->turn_token;
         return $token;
     }
-
 
     function regenerateToken(){
         /**************start///////////////************/
