@@ -23,36 +23,6 @@ class ItemController extends Controller
             return $this->notFoundResponse();
         }
 
-
-        /********************************original ****************/
-//        $dbItems = Item::whereHas('brand', function ($q) use ($request) {
-//            $q->where(['status' => 1, 'type' => 'local'])->whereIn('id', $request->brand_id);
-//        })->select('id', 'product_name', 'thumbnail',
-//            'part_description',
-//            'category', 'subcategory',
-//            'type',
-//            'price', 'brand_id')
-//
-//
-//            ->get()->toArray();
-//
-//        $data = Item::join('brands', 'items.brand_code', '=', 'brands.code')
-//            ->join('pricing_lists', 'items.code', '=', 'pricing_lists.item_code')
-//            ->where('brands.status', 1)
-//            ->where('brands.type', 'api')
-////            ->where('items.type' , 'api')
-//            ->whereIn('items.brand_code', $request->brand_id)
-//            ->selectRaw("
-//                items.*,
-//                brands.name as brand_name,
-//                SUM(pricing_lists.price) as total_price,
-//                SUM(pricing_lists.purchase_cost) as total_purchase_cost"
-//            )
-//            ->groupBy('items.id')
-//
-//            ->get();
-        /*********************end original *********************/
-
         /*************************db items query*************/
         $query = Item::where('type' , 'local')->whereHas('brand', function ($q) use ($request) {
             $q->where(['status' => 1])->whereIn('code', $request->brand_id);
