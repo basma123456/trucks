@@ -51,42 +51,51 @@ class ItemController extends Controller
     }
 
 
-
-
     public function show(Request $request)
     {
-        if ($request->type == 'api') {
-            $data = $this->getReturnedData($request, '/items/' . $request->item_id, 'get');
-            $price = $this->getReturnedData($request, '/pricing/' . $request->item_id, 'get');
 
-            if (isset($price['data']) && $price['data']['attributes']['can_purchase']) {
-                $allPrice = $price['data']['attributes']['pricelists'][0]['price'] +
-                    $price['data']['attributes']['pricelists'][0]['price'] +
-                    $price['data']['attributes']['purchase_cost'];
-            } else {
-                $allPrice = 'N/A';
-            }
-
-            if ($data->status() === 401) {
-                return $this->error(null, 'Token expired or invalid', 401);
-            }
-            if (!isset($data->json()['data'])) {
-                return $this->notFoundResponse();
-            }
-            $allData = [ 'allData' => $data->json()['data']  , 'allPrice' => $allPrice];
-            return $this->success(new ItemSinglePageResource($allData), 'success', 200);
-
-        } elseif ($request->type == 'local') {
-            $data = Item::whereHas('brand', function ($q) {
-                $q->where(['status' => 1]);
-            })->where('code' , $request->item_id)->first();
+            $data = Item::where(['code' => $request->item_id , 'type' => $request->type])->first();
             if (!$data) {
                 return $this->notFoundResponse();
             }
-            $allData = [ 'allData' => $data , 'allPrice' => 0];
-            return $this->success(new ItemSinglePageResource($allData), 'success', 200);
-        }
+            return $this->success(new ItemSinglePageResource($data), 'success', 200);
     }
+
+
+//    public function show(Request $request)
+//    {
+//        if ($request->type == 'api') {
+//            $data = $this->getReturnedData($request, '/items/' . $request->item_id, 'get');
+//            $price = $this->getReturnedData($request, '/pricing/' . $request->item_id, 'get');
+//
+//            if (isset($price['data']) && $price['data']['attributes']['can_purchase']) {
+//                $allPrice = $price['data']['attributes']['pricelists'][0]['price'] +
+//                    $price['data']['attributes']['pricelists'][0]['price'] +
+//                    $price['data']['attributes']['purchase_cost'];
+//            } else {
+//                $allPrice = 'N/A';
+//            }
+//
+//            if ($data->status() === 401) {
+//                return $this->error(null, 'Token expired or invalid', 401);
+//            }
+//            if (!isset($data->json()['data'])) {
+//                return $this->notFoundResponse();
+//            }
+//            $allData = [ 'allData' => $data->json()['data']  , 'allPrice' => $allPrice];
+//            return $this->success(new ItemSinglePageResource($allData), 'success', 200);
+//
+//        } elseif ($request->type == 'local') {
+//            $data = Item::whereHas('brand', function ($q) {
+//                $q->where(['status' => 1]);
+//            })->where('code' , $request->item_id)->first();
+//            if (!$data) {
+//                return $this->notFoundResponse();
+//            }
+//            $allData = [ 'allData' => $data , 'allPrice' => 0];
+//            return $this->success(new ItemSinglePageResource($allData), 'success', 200);
+//        }
+//    }
 
 
     public function itemsData(Request $request)
