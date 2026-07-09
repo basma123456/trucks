@@ -29,4 +29,6 @@ class Item extends Model
         return $this->belongsTo(Brand::class, 'brand_id');
     }
     //    when type == 'local' then brand_code ==l-{brand_id}
+
+
 }

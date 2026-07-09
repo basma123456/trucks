@@ -12,12 +12,11 @@ class ItemsService
 {
     public function items($request, $query, $query2)
     {
-
         if ($request->price_from) {
             $query->where('price', '>=', $request->price_from);
 
             $query2->whereRaw(
-                '(pricing_lists.price  + COALESCE(pricing_lists.purchase_cost,0)) >= ?',
+                '(COALESCE(pricing.total_price,0) + COALESCE(pricing.purchase_cost,0)) >= ?',
                 [$request->price_from]
             );
         }
@@ -26,7 +25,7 @@ class ItemsService
             $query->where('price', '<=', $request->price_to);
 
             $query2->whereRaw(
-                '(pricing_lists.price  + COALESCE(pricing_lists.purchase_cost,0)) <= ?',
+                '(COALESCE(pricing.total_price,0) + COALESCE(pricing.purchase_cost,0)) <= ?',
                 [$request->price_to]
             );
         }
@@ -39,7 +38,12 @@ class ItemsService
         }
 
 
-
+//        $dbItems = $query->select('id', "code", 'product_name', 'thumbnail',
+//            'part_description',
+//            'category', 'subcategory',
+//            'type',
+//            'price', 'brand_id', 'brand_code');
+//
 
         $dbItems = $query->select(
             'items.*',
@@ -54,8 +58,8 @@ class ItemsService
         $data = $query2->select(
             'items.*',
             'brands.name as brand_name',
-            DB::raw('SUM(pricing_lists.price) as total_price'),
-            DB::raw('ANY_VALUE(pricing_lists.purchase_cost) as purchase_cost')
+            DB::raw('COALESCE(pricing.total_price,0) as total_price'),
+            DB::raw('COALESCE(pricing.purchase_cost,0) as purchase_cost')
         );
 
         $apIdataArray = $data;
@@ -87,7 +91,15 @@ class ItemsService
 //    }
 
 
-
+//    public function localItemsQuery($brandId)
+//    {
+//        /*************************local items query*************/
+//        $query = Item::where('type', 'local')->whereHas('brand', function ($q) use ($brandId) {
+//            $q->where(['status' => 1])->whereIn('code', $brandId);
+//        });
+//        return $query;
+//        /*****************end  local items query************/
+//    }
     public function localItemsQuery($brandId)
     {
         return Item::query()
@@ -115,7 +127,7 @@ class ItemsService
 //        return Item::query()
 //            ->join('brands', 'items.brand_code', '=', 'brands.code')
 //            ->joinSub($pricingQuery, 'pricing', function ($join) {
-//                $join->on('items.code', '=', 'pricing_lists.item_code');
+//                $join->on('items.code', '=', 'pricing.item_code');
 //            })
 //            ->where('brands.status', 1)
 //            ->where('brands.type', 'api')
@@ -128,6 +140,11 @@ class ItemsService
 //            ->where('brands.type', 'api')
             ->where('items.type' , 'api')
             ->whereIn('items.brand_code', $brandId)
+            ->select(
+                'item_code',
+                DB::raw('SUM(price) as total_price'),
+                DB::raw('MIN(purchase_cost) as purchase_cost')
+            )
             ->groupBy('items.code');
 
         return $query2;

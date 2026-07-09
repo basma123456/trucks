@@ -42,9 +42,6 @@ Route::middleware('turn_auth')->group(function () {
     Route::get('dropship-show', [DropshipController::class, 'dropShipShow']);
     Route::get('inventory', [InventoryController::class, 'getAllInventory']);
     Route::get('inventory-show', [InventoryController::class, 'getItemInventory']);
-    Route::get('items', [ItemController::class, 'index']);
-//    Route::get('items2', [\App\Http\Controllers\Api\ItemOriginalController::class, 'index']);
-
     Route::get('inventory-brand', [InventoryController::class, 'getBrandInventory']);
     Route::get('price-group-inventory', [InventoryController::class, 'getPriceGroupInventory']);
     Route::get('recently-updated-inventory', [InventoryController::class, 'getRecentlyUpdatedInventory']);
@@ -61,22 +58,25 @@ Route::middleware('turn_auth')->group(function () {
     Route::get('order-show' , [OrderController::class , 'show']);
     Route::get('order-show-by-po' , [OrderController::class , 'getOrderByPurchaseOrder']);
     Route::get('orders-date-range' , [OrderController::class , 'ordersDateRange']);
-
     Route::get('payments' , [PaymentController::class , 'index']);
     Route::get('payment-show' , [PaymentController::class , 'show']);
     Route::get('payment-show-by-invoice' , [PaymentController::class , 'showByInvoice']);
     Route::get('payments-date-range' , [PaymentController::class , 'paymentsDateRange']);
-
     Route::get('pricing' , [PricingController::class , 'index']);
     Route::get('pricing-item' , [PricingController::class , 'getPricingItem']);
-
     Route::get('pricing-brand' , [PricingController::class , 'getPricingBrand']);
     Route::get('pricing-brand-by-group' , [PricingController::class , 'getPricingBrandByGroup']);
     Route::get('shipping' , [ShippingController::class , 'index']);
-
-
-    Route::get('items/show' , [ItemController::class , 'show']);
     Route::post('items/list-items-of-brands' , [ItemController::class , 'getItemsFromArrayOfBrands']);
+
+
+    Route::middleware('auth:visitor')->group(function(){
+        Route::get('items', [ItemController::class, 'index']);
+        Route::get('items/show' , [ItemController::class , 'show']);
+    });
+
+
+    Route::get('check', [AuthController::class, 'checkAuthenticationFunc']);
 
 
 
@@ -93,6 +93,6 @@ Route::middleware('turn_auth')->group(function () {
 //    dropship/{dropship_id}
 });
 
-Route::get('check', [AuthController::class, 'checkAuthenticationFunc']);
+
 
 

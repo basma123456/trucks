@@ -12,6 +12,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 class Visitor  extends Authenticatable
 {
+
+    protected $table = 'visitors';
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable, HasApiTokens;
     protected $fillable = [

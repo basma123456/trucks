@@ -3,6 +3,9 @@
 namespace App\Traits;
 
 
+use App\Http\Resources\ItemResource;
+use Illuminate\Pagination\LengthAwarePaginator;
+
 trait ApiResponseTrait
 {
 
@@ -147,6 +150,41 @@ trait ApiResponseTrait
     }
 
 
+    public function paginateSuccess($data = [], string $message = null, $code = 200, $token = null)
+    {
 
+
+//        return response()->json([
+//            'success' => true,
+//            'message' => null,
+//            'data' => $data,
+//            'pagination' => [
+//                'current_page' => $data->currentPage(),
+//                'last_page' => $data->lastPage(),
+//                'per_page' => $data->perPage(),
+//                'total' => $data->total(),
+//                'from' => $data->firstItem(),
+//                'to' => $data->lastItem(),
+//                'next_page_url' => $data->nextPageUrl(),
+//                'prev_page_url' => $data->previousPageUrl(),
+//            ],
+//        ]);
+
+        return [
+            'success' => true,
+            'message' => null,
+            'data' => ItemResource::collection($data->items())->resolve(),
+            'pagination' => [
+                'current_page' => $data->currentPage(),
+                'last_page' => $data->lastPage(),
+                'per_page' => $data->perPage(),
+                'total' => $data->total(),
+                'from' => $data->firstItem(),
+                'to' => $data->lastItem(),
+                'next_page_url' => $data->nextPageUrl(),
+                'prev_page_url' => $data->previousPageUrl(),
+            ],
+        ];
+    }
 
 }

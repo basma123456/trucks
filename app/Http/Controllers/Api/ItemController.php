@@ -10,12 +10,14 @@ use App\Models\Item;
 use App\Models\PricingList;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use function Ramsey\Collection\Map\keys;
 use App\Services\ApiService;
 use App\Services\PricingService;
 use App\Services\ItemsService;
 use App\Http\Resources\ItemSinglePageResource;
+
 class ItemController extends Controller
 {
     use IntegrateTrait;
@@ -28,74 +30,72 @@ class ItemController extends Controller
 
     public function index(Request $request)
     {
+
         if (empty($request->brand_id)) {
             return $this->notFoundResponse();
         }
-        /*******************db items query **********/
-        $query = $this->itemsService->localItemsQuery($request->brand_id);
-        /*******************db items query **********/
 
-        /*******************api items query **********/
-        $pricingQuery = $this->itemsService->pricingQuery();
-        $query2 = $this->itemsService->apiItemsQuery($pricingQuery, $request->brand_id);
-        /**************end api items query**********/
+        $brandIds = (array) $request->brand_id;
+        sort($brandIds);
 
-        $allItems = $this->itemsService->items($request, $query, $query2);
-        $all = $allItems['all'];
-        if ((empty($allItems['apIdataArray']) && empty($allItems['dbItems']))) {
-            return $this->notFoundResponse();
-        }
-        $result = ItemResource::collection($all);
-        $paginated = $this->itemsService->paginationOfItems($result, $request->per_page);
-        return $this->success($paginated);
+        $cacheKey = 'items_' . md5(json_encode([
+                'brand_id'   => $brandIds,
+                'search'     => $request->search,
+                'price_from' => $request->price_from,
+                'price_to'   => $request->price_to,
+                'page'       => $request->page ?? 1,
+                'per_page'   => $request->per_page ?? 20,
+            ]));
+
+        $response = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($request, $brandIds) {
+
+            $query = $this->itemsService->localItemsQuery($brandIds);
+
+            $pricingQuery = $this->itemsService->pricingQuery();
+
+            $query2 = $this->itemsService->apiItemsQuery($pricingQuery, $brandIds);
+
+            $paginator = $this->itemsService->items($request, $query, $query2)['all'];
+
+            return [
+                'success' => true,
+                'message' => null,
+                'data' => ItemResource::collection($paginator->items())->resolve(),
+                'pagination' => [
+                    'current_page'  => $paginator->currentPage(),
+                    'last_page'     => $paginator->lastPage(),
+                    'per_page'      => $paginator->perPage(),
+                    'total'         => $paginator->total(),
+                    'from'          => $paginator->firstItem(),
+                    'to'            => $paginator->lastItem(),
+                    'next_page_url' => $paginator->nextPageUrl(),
+                    'prev_page_url' => $paginator->previousPageUrl(),
+                ],
+            ];
+        });
+
+        return response()->json($response);
     }
+
 
 
     public function show(Request $request)
     {
 
-            $data = Item::where(['code' => $request->item_id , 'type' => $request->type])->first();
-            if (!$data) {
-                return $this->notFoundResponse();
-            }
-            return $this->success(new ItemSinglePageResource($data), 'success', 200);
+        $data = Item::leftJoin('pricing_lists' , 'items.code' , '=' ,'pricing_lists.item_code')
+            ->where(['code' => $request->item_id, 'type' => $request->type])
+            ->select('items.*' , DB::raw('SUM(pricing_lists.price) as total_price') , DB::raw('ANY_VALUE(pricing_lists.purchase_cost) as purchase_cost'))
+            ->groupBy('items.code')->first();
+
+
+        if (!$data) {
+            return $this->notFoundResponse();
+        }
+        return $this->success(new ItemSinglePageResource($data), 'success', 200);
     }
 
 
-//    public function show(Request $request)
-//    {
-//        if ($request->type == 'api') {
-//            $data = $this->getReturnedData($request, '/items/' . $request->item_id, 'get');
-//            $price = $this->getReturnedData($request, '/pricing/' . $request->item_id, 'get');
-//
-//            if (isset($price['data']) && $price['data']['attributes']['can_purchase']) {
-//                $allPrice = $price['data']['attributes']['pricelists'][0]['price'] +
-//                    $price['data']['attributes']['pricelists'][0]['price'] +
-//                    $price['data']['attributes']['purchase_cost'];
-//            } else {
-//                $allPrice = 'N/A';
-//            }
-//
-//            if ($data->status() === 401) {
-//                return $this->error(null, 'Token expired or invalid', 401);
-//            }
-//            if (!isset($data->json()['data'])) {
-//                return $this->notFoundResponse();
-//            }
-//            $allData = [ 'allData' => $data->json()['data']  , 'allPrice' => $allPrice];
-//            return $this->success(new ItemSinglePageResource($allData), 'success', 200);
-//
-//        } elseif ($request->type == 'local') {
-//            $data = Item::whereHas('brand', function ($q) {
-//                $q->where(['status' => 1]);
-//            })->where('code' , $request->item_id)->first();
-//            if (!$data) {
-//                return $this->notFoundResponse();
-//            }
-//            $allData = [ 'allData' => $data , 'allPrice' => 0];
-//            return $this->success(new ItemSinglePageResource($allData), 'success', 200);
-//        }
-//    }
+
 
 
     public function itemsData(Request $request)
