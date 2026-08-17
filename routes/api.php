@@ -68,8 +68,6 @@ Route::middleware('turn_auth')->group(function () {
     Route::get('pricing-brand-by-group' , [PricingController::class , 'getPricingBrandByGroup']);
     Route::get('shipping' , [ShippingController::class , 'index']);
     Route::post('items/list-items-of-brands' , [ItemController::class , 'getItemsFromArrayOfBrands']);
-    Route::get('items', [ItemController::class, 'index']);
-    Route::get('items/show' , [ItemController::class , 'show']);
 
 
 
@@ -95,7 +93,8 @@ Route::middleware('auth:visitor')->group(function(){
     });
 });
 
-
+Route::get('items', [ItemController::class, 'index']);
+Route::get('items/show' , [ItemController::class , 'show']);
 Route::get('check', [AuthController::class, 'checkAuthenticationFunc']);
 
 
